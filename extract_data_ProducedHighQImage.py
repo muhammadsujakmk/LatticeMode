@@ -8,7 +8,7 @@ def path():
     return r"C:\RESEARCH\RESEARCH MOL\Surface Lattice\2D lattice Strucuture\Lattice with Waveguide\\"
 
 def main(): 
-    idx = 2 
+    idx = 3 
     if idx==2:
         label = "Reflectance"
     elif idx==3:
@@ -16,31 +16,30 @@ def main():
     else:
         label = "Absorbance"
     Dn = "array_water_TM_smallAOI_0_10" 
-    filename= "Au_{}.txt".format(Dn)
-    file_Out= "Au_{}_{}.txt".format(label,Dn)
-    file_dispersion= "Au_{}_{}_dispersion.txt".format(label,Dn)
+    filename= path()+f"Au_{Dn}.txt"
+    file_Out= path()+f"Au_{Dn}_{label}.txt"
+    file_dispersion= path()+f"Au_{Dn}_{label}_dispersion.txt"
     #writing_file(filename,file_Out,idx)
-    #writing_file_dispersion(filename,file_dispersion,idx)
+    writing_file_dispersion(filename,file_dispersion,idx)
     plot2D(file_dispersion,label)
-    Separate_file(filename,idx,label,Dn)
+    #Separate_file(filename,idx,label,Dn)
     #MergeImage(Dn)
     AOI=np.linspace(0,10,11)
     c = ["b","c","g","k"]
     fig, ax = plt.subplots() 
+    """ 
     for ang in AOI: 
         file1 = np.loadtxt(f"Au_{Dn}_{label}{ang}.txt")
         x = np.linspace(500,1000,501) 
         y_f1 = interPol(file1[:,0],file1[:,1]) 
         plt.plot(x,y_f1(x),label="$\u03B8={:.0f} \u00B0$".format(ang),linewidth=5) 
 
-    """ 
     AOI=np.linspace(0,50,6)
     for ang in AOI: 
         file1 = np.loadtxt("Au_{}_{}{}.txt".format(Dn,label,ang))
         x = np.linspace(500,1499,1001) 
         y_f1 = interPol(file1[:,0],file1[:,1]) 
         plt.plot(x,y_f1(x),label="$\u03B8={} \u00B0$".format(ang),linewidth=5) 
-    """ 
     ax2 = ax.secondary_xaxis("top", functions=(wvl2eV,eV2wvl)) 
     ax2.set_xlabel("Energy (eV)",fontsize=15) 
     ax.set_xlabel('Wavelength (nm)', fontsize=15)
@@ -55,6 +54,7 @@ def main():
     ax.set_xticks(np.arange(500,1100,100)) 
     #plt.savefig("{} P = {}nm.jpg".format(Dn,p)) 
     plt.show()
+    """ 
 
 
 def Separate_file(filename,idx,label,Dn):
@@ -72,15 +72,15 @@ def Separate_file(filename,idx,label,Dn):
 
 
 def writing_file_dispersion(filename,file_Out,idx):
-    with open(filename,"r") as file:
-        lines = file.readlines()[5:]
+    with open(filename,"r") as fileIn:
+        lines = fileIn.readlines()[5:]
         with open(file_Out,"w") as file:
             for line in lines:
                 line=line.split()
-                data = "{} {} {}\n".format(2*np.pi/float(line[1])*np.sin(np.pi/180*float(line[0]))*1e+03,1240/float(line[1]),float(line[idx])*1e+01)
+                data = "{} {} {}\n".format(2*np.pi/float(line[1])*np.sin(np.pi/180*float(line[0]))*1e+03,1240/float(line[1]),float(line[idx]))
                 #data = "{} {} {}\n".format((line[0]),line[1],line[idx])
                 file.write(data)
-
+    file.close()
 def writing_file(filename,file_Out,idx):
     with open(filename,"r") as file:
         lines = file.readlines()[5:]
@@ -104,8 +104,8 @@ def Rayleigh_Anomaly(n,m):
 
 def plot2D(filename,label):
     x, y, z = np.genfromtxt(filename,unpack=True)
-    xi = np.linspace(x.min(), x.max(), 5000)
-    yi = np.linspace(y.min(), y.max(), 5000)
+    xi = np.linspace(x.min(), x.max(), 3000)
+    yi = np.linspace(y.min(), y.max(), 3000)
     zi = scipy.interpolate.griddata((x,y), z, (xi[None,:], yi[:, None]), method="cubic")
     nRIsup = 1.5 
     nRIsub = 1.3325
@@ -116,7 +116,7 @@ def plot2D(filename,label):
     kx1sup,Erg1sup,kx2sup,Erg2sup = Rayleigh_Anomaly(nRIsup,m1)  
     #kx1m2sup,Erg1m2sup,kx2m2sup,Erg2m2sup = Rayleigh_Anomaly(nRIsup,m2)  
     fig = plt.figure(figsize=(8,6))
-    im=plt.contourf(xi,yi,zi,cmap='gray')
+    im=plt.contourf(xi,yi,zi)
     cbar = plt.colorbar(im,format='%.1f')
     #cbar.set_ticks([0, 0.5, 1]) 
     cbar.ax.tick_params(labelsize=15)
