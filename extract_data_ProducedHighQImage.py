@@ -4,6 +4,10 @@ import scipy.interpolate
 from PIL import Image
 import matplotlib as mpl
 
+def path():
+    return r"C:\RESEARCH\RESEARCH MOL\Surface Lattice\2D lattice Strucuture\Lattice with Waveguide\\"
+
+
 def main(): 
     idx = 2 
     if idx==2:
