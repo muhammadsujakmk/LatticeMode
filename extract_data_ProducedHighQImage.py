@@ -3,11 +3,13 @@ import matplotlib.pyplot as plt
 import scipy.interpolate
 from PIL import Image
 import matplotlib as mpl
+import time
 
 def path():
     return r"C:\RESEARCH\RESEARCH MOL\Surface Lattice\2D lattice Strucuture\Lattice with Waveguide\\"
 
 def main(): 
+    start = time.time() 
     idx = 3 
     if idx==2:
         label = "Reflectance"
@@ -21,7 +23,7 @@ def main():
     file_dispersion= path()+f"Au_{Dn}_{label}_dispersion.txt"
     #writing_file(filename,file_Out,idx)
     writing_file_dispersion(filename,file_dispersion,idx)
-    plot2D(file_dispersion,label)
+    plot2D(file_dispersion,label,start)
     #Separate_file(filename,idx,label,Dn)
     #MergeImage(Dn)
     AOI=np.linspace(0,10,11)
@@ -77,7 +79,7 @@ def writing_file_dispersion(filename,file_Out,idx):
         with open(file_Out,"w") as file:
             for line in lines:
                 line=line.split()
-                data = "{} {} {}\n".format(2*np.pi/float(line[1])*np.sin(np.pi/180*float(line[0]))*1e+03,1240/float(line[1]),float(line[idx]))
+                data = "{} {} {}\n".format(2*np.pi/float(line[1])*np.sin(np.pi/180*float(line[0]))*1e3,1240/float(line[1]),float(line[idx]))
                 #data = "{} {} {}\n".format((line[0]),line[1],line[idx])
                 file.write(data)
     file.close()
@@ -96,17 +98,18 @@ def Rayleigh_Anomaly(n,m):
     res1 = p/m 
     res2 = (n+np.sin(AOI*np.pi/180))*res1
     res3 = (n-np.sin(AOI*np.pi/180))*res1
-    kx1 = 2*np.pi/res2*np.sin(np.pi/180*AOI)*1e+03
-    kx2 = 2*np.pi/res3*np.sin(np.pi/180*AOI)*1e+03   
+    kx1 = 2*np.pi/res2*np.sin(np.pi/180*AOI)*1e3
+    kx2 = 2*np.pi/res3*np.sin(np.pi/180*AOI)*1e3
     Erg1 = 1240/res2 
     Erg2 = 1240/res3 
     return kx1,Erg1,kx2,Erg2
 
-def plot2D(filename,label):
+def plot2D(filename,label,start):
     x, y, z = np.genfromtxt(filename,unpack=True)
-    xi = np.linspace(x.min(), x.max(), 3000)
-    yi = np.linspace(y.min(), y.max(), 3000)
-    zi = scipy.interpolate.griddata((x,y), z, (xi[None,:], yi[:, None]), method="cubic")
+    xi = np.linspace(x.min(), x.max(), 1000)
+    yi = np.linspace(y.min(), y.max(), 1000)
+    Xi,Yi=np.meshgrid(xi,yi) 
+    zi = scipy.interpolate.griddata((x,y), z, (Xi,Yi), method="linear")
     nRIsup = 1.5 
     nRIsub = 1.3325
     m1 = 1 
@@ -115,10 +118,10 @@ def plot2D(filename,label):
     #kx1m2sub,Erg1m2sub,kx2m2sub,Erg2m2sub = Rayleigh_Anomaly(nRIsub,m2)  
     kx1sup,Erg1sup,kx2sup,Erg2sup = Rayleigh_Anomaly(nRIsup,m1)  
     #kx1m2sup,Erg1m2sup,kx2m2sup,Erg2m2sup = Rayleigh_Anomaly(nRIsup,m2)  
-    fig = plt.figure(figsize=(8,6))
-    im=plt.contourf(xi,yi,zi)
-    cbar = plt.colorbar(im,format='%.1f')
-    #cbar.set_ticks([0, 0.5, 1]) 
+    plt.figure(figsize=(8,6))
+    im = plt.contourf(xi,yi,zi,levels=np.linspace(0.5,1,200),cmap="Greys",extend='neither')
+    cbar = plt.colorbar()
+    cbar.set_ticks([0.5, 1, 1]) 
     cbar.ax.tick_params(labelsize=15)
     plt.title('{}'.format(label), fontsize=20)
     plt.xlabel('k$_{//}$ ($\u03BCm^{-1}$)', fontsize=15)
@@ -138,8 +141,13 @@ def plot2D(filename,label):
     plt.xlim(x.min(),x.max()) 
     plt.ylim(y.min(),y.max()) 
     #plt.savefig("Px Pol-Wavelength= {}nm.jpg".format(wl))
+    end = time.time()
+    timeCal(start,end)
     plt.show()
 
+def timeCal(start,end):
+    compu = end-start
+    print(f"########==> Done in {compu%3600//60} minutes {compu%60} second")
 def interPol(x,y):
     return scipy.interpolate.interp1d(x,y,'cubic')
 
