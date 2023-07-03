@@ -9,8 +9,7 @@ def path():
     return r"C:\RESEARCH\RESEARCH MOL\Surface Lattice\2D lattice Strucuture\Lattice with Waveguide\\"
 
 def main(): 
-    start = time.time() 
-    idx = 3 
+    idx = 2 
     if idx==2:
         label = "Reflectance"
     elif idx==3:
@@ -22,8 +21,10 @@ def main():
     file_Out= path()+f"Au_{Dn}_{label}.txt"
     file_dispersion= path()+f"Au_{Dn}_{label}_dispersion.txt"
     #writing_file(filename,file_Out,idx)
+     
     writing_file_dispersion(filename,file_dispersion,idx)
-    plot2D(file_dispersion,label,start)
+    maxx, minn = find_max_min(file_dispersion)
+    plot2D(file_dispersion,label,round(maxx,1),round(minn,1))
     #Separate_file(filename,idx,label,Dn)
     #MergeImage(Dn)
     AOI=np.linspace(0,10,11)
@@ -104,7 +105,7 @@ def Rayleigh_Anomaly(n,m):
     Erg2 = 1240/res3 
     return kx1,Erg1,kx2,Erg2
 
-def plot2D(filename,label,start):
+def plot2D(filename,label,maxx,minn):
     x, y, z = np.genfromtxt(filename,unpack=True)
     xi = np.linspace(x.min(), x.max(), 1000)
     yi = np.linspace(y.min(), y.max(), 1000)
@@ -112,17 +113,18 @@ def plot2D(filename,label,start):
     zi = scipy.interpolate.griddata((x,y), z, (Xi,Yi), method="linear")
     nRIsup = 1.5 
     nRIsub = 1.3325
-    m1 = 1 
+    m1 = 1
     m2 = 2 
     kx1sub,Erg1sub,kx2sub,Erg2sub = Rayleigh_Anomaly(nRIsub,m1)  
     #kx1m2sub,Erg1m2sub,kx2m2sub,Erg2m2sub = Rayleigh_Anomaly(nRIsub,m2)  
     kx1sup,Erg1sup,kx2sup,Erg2sup = Rayleigh_Anomaly(nRIsup,m1)  
     #kx1m2sup,Erg1m2sup,kx2m2sup,Erg2m2sup = Rayleigh_Anomaly(nRIsup,m2)  
     plt.figure(figsize=(8,6))
-    im = plt.contourf(xi,yi,zi,levels=np.linspace(0.5,1,200),cmap="Greys",extend='neither')
+    im = plt.contourf(xi,yi,zi,levels=np.linspace(minn,maxx,200),cmap="Greys",extend='neither')
     cbar = plt.colorbar()
-    cbar.set_ticks([0.5, 1, 1]) 
+    cbar.set_ticks([minn,maxx, 1]) 
     cbar.ax.tick_params(labelsize=15)
+    plt.gca().set_facecolor('black')
     plt.title('{}'.format(label), fontsize=20)
     plt.xlabel('k$_{//}$ ($\u03BCm^{-1}$)', fontsize=15)
     plt.ylabel('Energy (eV)', fontsize=15)
@@ -136,22 +138,17 @@ def plot2D(filename,label,start):
     plt.plot(kx2sup,Erg2sup,label="$\u03bb_{rayleigh}^{superstrate} (-1)$",linewidth=1,c="w") 
     #plt.plot(kx1m2sup,Erg1m2sup,label="$\u03bb_{rayleigh}^{superstrate} (+2)$",linewidth=3) 
     #plt.plot(kx2m2sup,Erg2m2sup,label="$\u03bb_{rayleigh}^{superstrate} (-2)$",linewidth=3) 
-    plt.legend(loc='best',fontsize=13) 
+    plt.legend(loc='lower right',fontsize=13) 
     plt.xticks(np.arange(0,2.1,0.5)) 
     plt.xlim(x.min(),x.max()) 
     plt.ylim(y.min(),y.max()) 
     #plt.savefig("Px Pol-Wavelength= {}nm.jpg".format(wl))
-    end = time.time()
-    timeCal(start,end)
     plt.show()
 
-def timeCal(start,end):
-    compu = end-start
-    print(f"########==> Done in {compu%3600//60} minutes {compu%60} second")
 def interPol(x,y):
     return scipy.interpolate.interp1d(x,y,'cubic')
 
-def MergeImage(Dn):
+def MergingImage(Dn):
     img_01 = Image.open("{} P = 300.0nm.jpg".format(Dn))
     img_02 = Image.open("{} P = 350.0nm.jpg".format(Dn))
     img_03 = Image.open("{} P = 400.0nm.jpg".format(Dn))
@@ -184,10 +181,11 @@ def wvl2eV(wvl):
 
 def eV2wvl(eV):
     return 1240/eV
-def find_max_min():
+
+def find_max_min(file):
     max_val = float('-inf')
     min_val = float('+inf')
-    with open('Au_Reflectance_array_water_TM_smallAOI_0_10_dispersion.txt','r') as file:
+    with open(file,'r') as file:
         lines = file.readlines()
         for line in lines:
             line = line.split()
@@ -196,10 +194,12 @@ def find_max_min():
                 max_val=val
             elif val<min_val:
                 min_val=val
+    return max_val, min_val
+    """
     print('#####################################')
     print(f'Max is {max_val} and Min is {min_val}')
     print('#####################################')
-
+    """
 
 
 #MergeImage()
