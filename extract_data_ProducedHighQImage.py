@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.interpolate
 from PIL import ImageFont, ImageDraw, Image
-import cv2
 import matplotlib as mpl
 import os
 
@@ -17,7 +16,7 @@ def main():
         label = "Transmittance"
     else:
         label = "Absorbance"
-    Dn = "array_water_TE_smallAOI_0_10" 
+    Dn = "array_Glycerol_TE_smallAOI_0_10" 
     filename= path()+f"Au_{Dn}.txt"
     file_Out= path()+f"Au_{Dn}_{label}.txt"
     file_dispersion= path()+f"Au_{Dn}_{label}_dispersion.txt"
@@ -107,51 +106,83 @@ def Rayleigh_Anomaly(n,m):
     return kx1,Erg1,kx2,Erg2
 
 def plot2D(filename,maxx,minn,label):
+    # Loading data files 
     x, y, z = np.genfromtxt(filename,unpack=True)
     xi = np.linspace(x.min(), x.max(), 1000)
     yi = np.linspace(y.min(), y.max(), 1000)
     Xi,Yi=np.meshgrid(xi,yi) 
     zi = scipy.interpolate.griddata((x,y), z, (Xi,Yi), method="linear")
-    nRIsup = 1.5 
-    nRIsub = 1.3325
+    nRIsub = 1.5 
+    nRIsup = 1.4722
     m1 = 1
     m2 = 2 
     kx1sub,Erg1sub,kx2sub,Erg2sub = Rayleigh_Anomaly(nRIsub,m1)  
     #kx1m2sub,Erg1m2sub,kx2m2sub,Erg2m2sub = Rayleigh_Anomaly(nRIsub,m2)  
     kx1sup,Erg1sup,kx2sup,Erg2sup = Rayleigh_Anomaly(nRIsup,m1)  
     #kx1m2sup,Erg1m2sup,kx2m2sup,Erg2m2sup = Rayleigh_Anomaly(nRIsup,m2)  
-    plt.figure(figsize=(9,7))
-    plt.subplots_adjust(left=.1, right=1.05, top=.95, bottom=.11) 
-    im = plt.contourf(xi,yi,zi,levels=np.linspace(minn,maxx,200),cmap="binary",extend='neither')
-    cbar = plt.colorbar()
+    
+    #Plot window setting
+    fig=plt.figure(figsize=(8,6))
+    ax = fig.subplots() 
+    plt.subplots_adjust(left=.12, right=.99, top=.98, bottom=.14) 
+   
+    #Plot 2D
+    im=plt.contourf(xi,yi,zi,levels=np.linspace(minn,maxx,200),cmap="binary",extend='neither')
+    #plt.title('{}'.format(label), fontsize=20)
+    plt.xlabel('k$_{//}$ ($\u03BCm^{-1}$)', fontsize=20)
+    #plt.xlabel('k$_{//}$ ($nm^{-1}$)', fontsize=20)
+    plt.ylabel('Photon Energy (eV)', fontsize=20)
+    #plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    plt.gca().set_facecolor('black')
+    
+    #Setting colorbar
+    cbar = plt.colorbar(im,cax=ax.inset_axes((.88, .4, .03, .3)))
     ticks = np.linspace(minn,maxx,num=2)
     formatted_ticks = ["{:.1f}".format(tick) for tick in ticks]
     cbar.set_ticks(ticks)
     cbar.set_ticklabels(formatted_ticks)
-    cbar.ax.tick_params(labelsize=20)
-    plt.gca().set_facecolor('black')
-    #plt.title('{}'.format(label), fontsize=20)
-    #plt.xlabel('k$_{//}$ ($\u03BCm^{-1}$)', fontsize=15)
-    plt.xlabel('k$_{//}$ ($nm^{-1}$)', fontsize=20)
-    plt.ylabel('Photon Energy (eV)', fontsize=20)
-    plt.xticks(fontsize=20)
-    plt.yticks(fontsize=20)
+    cbar.ax.tick_params(labelcolor='white',labelsize=20)
+    
+    #Plot Rayleigh line
     lw = 3
-    plt.plot(kx1sub,Erg1sub,"--",label="$\u03bb_{rayleigh}^{substrate} (+1)$",linewidth=lw,c="w") 
-    plt.plot(kx2sub,Erg2sub,"--",label="$\u03bb_{rayleigh}^{substrate} (-1)$",linewidth=lw,c="k") 
+    plt.plot(kx1sub,Erg1sub,label="$\u03bb_{rayleigh}^{substrate}$",linewidth=lw,c="w") 
+    insertText(.001,1.19,"(+1,0)",color='white')
+    plt.plot(kx2sub,Erg2sub,linewidth=lw,c="w") 
+    insertText(.001,1.45,"(-1,0)",color='white')
     #plt.plot(kx1m2sub,Erg1m2sub,"--",label="$\u03bb_{rayleigh}^{substrate} (+2)$",linewidth=3) 
     #plt.plot(kx2m2sub,Erg2m2sub,"--",label="$\u03bb_{rayleigh}^{substrate} (-2)$",linewidth=3) 
-    plt.plot(kx1sup,Erg1sup,label="$\u03bb_{rayleigh}^{superstrate} (+1)$",linewidth=lw,c="w") 
-    plt.plot(kx2sup,Erg2sup,label="$\u03bb_{rayleigh}^{superstrate} (-1)$",linewidth=lw,c="k") 
+    plt.plot(kx1sup,Erg1sup,"--",label="$\u03bb_{rayleigh}^{superstrate}$",linewidth=lw,c="k") 
+    insertText(.001,1.33,"(+1,0)",color='black')
+    plt.plot(kx2sup,Erg2sup,"--",linewidth=lw,c="k") 
+    insertText(.001,1.59,"(-1,0)",color='black')
     #plt.plot(kx1m2sup,Erg1m2sup,label="$\u03bb_{rayleigh}^{superstrate} (+2)$",linewidth=3) 
     #plt.plot(kx2m2sup,Erg2m2sup,label="$\u03bb_{rayleigh}^{superstrate} (-2)$",linewidth=3) 
-    plt.legend(loc='lower right',fontsize=17) 
-    #plt.xticks(np.arange(0,2.1,0.5)) 
-    plt.xticks(np.arange(0e-3,2.1e-3,0.5e-3)) 
+    plt.legend(loc='lower right',fontsize=25)
     plt.xlim(x.min(),x.max()) 
     plt.ylim(y.min(),y.max()) 
-    #plt.savefig("Px Pol-Wavelength= {}nm.jpg".format(wl))
+   
+    #Labelling the graph
+    insertText(.0001,2.4,"(a)",fontsize=30,color='white')
+    
+    #Tuning x-absis range values
+    #plt.xticks(np.arange(0,2.1,0.5)) 
+    #plt.xticks(np.arange(0e-3,2.1e-3,0.5e-3)) 
+    xx=np.arange(0e-3,2.1e-3,0.5e-3)
+    format_labels = [f'{tick*1000}' for tick in xx] 
+    plt.xticks(xx,format_labels,fontsize=20)
+    
+    #Removing tick on x and Y
+    """ 
+    ticksy, _=plt.yticks()
+    ticksx, _=plt.xticks()
+    plt.yticks(ticksy,[])
+    plt.xticks(ticksx,[])
+    """
+    
+    #Showing figure
     plt.show()
+    #plt.savefig("Px Pol-Wavelength= {}nm.jpg".format(wl))
     os.remove(filename)
 
 def interPol(x,y):
@@ -183,6 +214,10 @@ def wvl2eV(wvl):
 def eV2wvl(eV):
     return 1240/eV
 
+def insertText(x,y,text,suf=plt,ha='center',va='center',fontsize=15,color='black'):
+    x_pos = x
+    y_pos = y
+    return suf.text(x_pos,y_pos,text,ha=ha,va=va,fontsize=fontsize,color=color)
 def find_max_min(file):
     max_val = float('-inf')
     min_val = float('+inf')
@@ -202,7 +237,7 @@ def find_max_min(file):
     print('#####################################')
     """
 
-
+#plotInset()
 #MergingImage()
 main()
 #find_max_min()
